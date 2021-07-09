@@ -29,7 +29,7 @@ It also does other useful things that this implementation doesn't (yet) do:
 2. It raises a useful `AmbiguityLookupError` in situations where it's not clear which implementation would be the best fit.
 
 However, both of these great projects have one important failing (in my view): neither of them support classmethods or staticmethods! This makes me sad :frowning_face:
-This new implementation *does* (although you won't be able to use the usual decorators; instead, you'll need to pass special keyword arguments to the `@inherited_dispatch` decorator provided here.
+This new implementation *does* (although you won't be able to use the usual decorators; instead, you'll need to pass special keyword arguments to the `@inherited_dispatch` decorator provided here).
 
 N.B. This implementation is specifically for multiple-dispatch methods, *not* multiple-dispatch functions outside of classes.
 
@@ -37,7 +37,7 @@ N.B. This implementation is specifically for multiple-dispatch methods, *not* mu
 Lots of evil magic involving metaclasses, inheritance and dunder methods.
 
 ## How do I use it?
-Rules for use are at the bottom of this README, and examples can be seen in examples.py.
+Rules for use are at the bottom of this README. Examples for how to use it can be seen in examples.py.
 
 ## How do I install it?
 This is not on pip, as it is a single file with 0 external dependencies, so just copy it into your code base if you are crazy enough to use it. Python 3.9+ is required.
