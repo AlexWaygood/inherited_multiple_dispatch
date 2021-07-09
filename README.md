@@ -36,6 +36,13 @@ N.B. This implementation is specifically for multiple-dispatch methods, *not* mu
 ## How does it work?
 Lots of evil magic involving metaclasses, inheritance and dunder methods.
 
+## How fast is it?
+I haven't done rigorous performance benchmarks, but a basic test indicates that instantiation of class instances takes around 10x the time as a class using `functools.singledispatchmethod`. 
+It is likely that other aspects of performance will also be slower, due to the use of metaclasses.
+
+This is not an apples-to-apples comparison: this module provides a large number of features not available with `functools.singledispathmethod`.
+However, you should think about whether performance might be an issue before using this module.
+
 ## How do I use it?
 Rules for use are at the bottom of this README, and examples can be seen in examples.py.
 

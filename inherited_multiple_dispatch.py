@@ -76,6 +76,21 @@
 (15) The base implementation may have a variable number of positional arguments,
 	or a variable number of keyword arguments. However, it may not have both.
 
+(16) If the base implementation does not have a variable number of arguments,
+	and is passed the incorrect number of arguments, the function call will fail,
+	as with a normal function call supplied the incorrect arguments.
+
+(16) __slots__ cannot be defined in any classes using "inherited multiple dispatch" features.
+	This module will raise a TypeError if you do so, due to unpredictable outcomes.
+	While it would not necessarily result in an exception otherwise,
+	it is unlikely that defining __slots__ would have any of the usual benefits
+	in terms of speed optimisations, immutability of fields, etc.
+
+(17) As far as I am aware, classes that use the InheritedDispatchMeta metaclass can be freely combined,
+	using multiple inheritance,	with classes that do not use a metaclass.
+	However, you cannot combine classes using InheritedDispatchMeta with classes using a different metaclass
+	(leads to a nasty error message about "metaclass conflict").
+
 """
 
 from __future__ import annotations
@@ -551,6 +566,8 @@ class CallableFunctionList(list):
 	this class is able to ascertain which implementation is required from the arguments that have been supplied.
 	"""
 
+	__slots__ = '__name__', 'base_impl', 'base_impl_args_len', 'variable_args_no', 'kind', 'checked'
+
 	def __init__(
 			self,
 			data: t.Optional[list[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]] = None,
@@ -591,6 +608,7 @@ class CallableFunctionList(list):
 
 	def _check_function_impls(self, /) -> None:
 		"""This function should only be accessed by InheritedDispatchMeta"""
+
 		g = groupby(func.kind for func in self)
 		if not (next(g, True) and not next(g, False)):
 			raise TypeError(
@@ -740,6 +758,8 @@ class _DictAllowingDuplicates(dict):
 	if they're marked with the @inherited_dispatch decorator
 	"""
 
+	__slots__ = tuple()
+
 	def __init__(self, data: t.Optional[ClassDictType] = None) -> None:
 		data = data if data else {}
 		data[GENERIC_FUNCDICT_PRIVATE] = {}
@@ -765,6 +785,8 @@ class InheritedDispatchMeta(type):
 	to allow for inheritable multiple-dispatch functions
 	"""
 
+	# Can't define __slots__ in a metaclass or we'll break Python.
+
 	def __prepare__(self, *args: t.Any) -> _DictAllowingDuplicates:
 		return _DictAllowingDuplicates()
 
@@ -772,7 +794,7 @@ class InheritedDispatchMeta(type):
 	def get_funcdict(some_class: InheritedDispatchMeta) -> dict[str, CallableFunctionList]:
 		"""Helper method for __new__() and __init__() below"""
 
-		return some_class.__dict__[GENERIC_FUNCDICT_PRIVATE]
+		return getattr(some_class, GENERIC_FUNCDICT_PRIVATE)
 
 	def __new__(
 			metacls: type[InheritedDispatchMeta],
@@ -783,30 +805,37 @@ class InheritedDispatchMeta(type):
 
 		new_dict = dict(cls_dict)
 
-		# Add some read-only properties for convenient access to the annotated_funcdicts.
-		for public_name, private_name in (
-				(GENERIC_FUNCDICT_PUBLIC, GENERIC_FUNCDICT_PRIVATE),
-				(BOUND_FUNCDICT_PUBLIC, BOUND_FUNCDICT_PRIVATE)
-		):
-			new_dict[public_name] = property(fget=lambda x: x.__class__.__dict__[private_name])
+		if '__slots__' in new_dict:
+			raise TypeError("You cannot define __slots__ in any classes that use the InheritedDispatchMeta metaclass.")
 
+		new_dict[GENERIC_FUNCDICT_PUBLIC] = property(fget=lambda inst: getattr(inst.__class__, GENERIC_FUNCDICT_PRIVATE))
+		new_dict[BOUND_FUNCDICT_PUBLIC] = property(fget=lambda inst: getattr(inst, BOUND_FUNCDICT_PRIVATE))
 		new_dict['_funcdict_checked'] = False
 
 		# Add an __init__ function or alter an __init__ function in any classes using this metaclass.
 		def added_init_fragment(self) -> None:
 			cls = self.__class__
-			generic_funcdict = cls.__dict__[GENERIC_FUNCDICT_PRIVATE]
+			generic_funcdict = getattr(cls, GENERIC_FUNCDICT_PRIVATE)
 			funcdict_checked = cls._funcdict_checked
 
 			if not funcdict_checked:
 				for func_list in filter(lambda x: not x.checked, generic_funcdict.values()):
 					func_list._check_function_impls()
 
+			private_funcdict = {}
+			setattr(self, BOUND_FUNCDICT_PRIVATE, private_funcdict)
+
 			for k, v in generic_funcdict.items():
 				if v.kind == INSTANCE:
-					setattr(self, k, NiceReprPartial(v, self))
+					func = NiceReprPartial(v, self)
+					setattr(self, k, func)
 				elif not funcdict_checked:
-					setattr(cls, k, (v if v.kind == STATIC else NiceReprPartial(v, cls)))
+					func = v if v.kind == STATIC else NiceReprPartial(v, cls)
+					setattr(cls, k, func)
+				else:
+					func = getattr(cls, k)
+
+				private_funcdict[k] = func
 
 			cls._funcdict_checked = True
 
@@ -859,5 +888,8 @@ class InheritedDispatchMeta(type):
 
 
 class InheritedDispatchBase(metaclass=InheritedDispatchMeta):
-	"""Base class provided for easy access to the metaclass"""
+	"""
+	Base class provided for easy access to the metaclass.
+	You are not allowed to define __slots__ in this class, or any other class using the InheritedDispatchMeta.
+	"""
 	pass

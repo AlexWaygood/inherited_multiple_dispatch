@@ -4,8 +4,6 @@ from typing import Literal, TypeVar
 
 
 class A(InheritedDispatchBase):
-	__slots__ = 'spam'
-
 	def __init__(self) -> None:
 		self.spam = 'A_Spam'
 
@@ -19,8 +17,6 @@ class A(InheritedDispatchBase):
 
 
 class B(A):
-	__slots__ = 'B_Spam'
-
 	def __init__(self) -> None:
 		super().__init__()
 		self.spam = 'B_Spam'
@@ -39,8 +35,6 @@ class B(A):
 
 
 class C(A):
-	__slots__ = 'C_Spam'
-
 	def __init__(self) -> None:
 		super().__init__()
 		self.spam = 'C_Spam'
@@ -51,8 +45,6 @@ class C(A):
 
 
 class One(InheritedDispatchBase):
-	__slots__ = tuple()
-
 	blah = 'One_Spam'
 
 	@inherited_dispatch(base_impl=True, class_method=True)
@@ -61,8 +53,6 @@ class One(InheritedDispatchBase):
 
 
 class Two(One):
-	__slots__ = tuple()
-
 	blah = 'Two_Spam'
 
 	@inherited_dispatch(class_method=True)
@@ -74,24 +64,18 @@ inherited_from_int = TypeVar('inherited_from_int', bound=int)
 
 
 class X(InheritedDispatchBase):
-	__slots__ = tuple()
-
 	@inherited_dispatch(base_impl=True)
 	def third_thing(self: X, arg: str):
 		return 'Base implementation'
 
 
 class Y(X):
-	__slots__ = tuple()
-
 	@inherited_dispatch
 	def third_thing(self: Y, arg: inherited_from_int):
 		return 'Implementation for Y and all subclasses of int'
 
 
 class Z(X):
-	__slots__ = tuple()
-
 	@inherited_dispatch
 	def third_thing(self: X, arg: Literal[True]):
 		return 'This should hopefully fail.'
