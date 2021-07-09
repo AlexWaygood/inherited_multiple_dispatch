@@ -9,21 +9,18 @@
 	but it is not essential to inherit from InheritedDispatchBase.
 	You could very easily write your own base class, if it uses InheritedDispatchMeta as its metaclass.
 
-(3) Overriding __getattr__ in any classes using InheritedDispatchMeta as the metaclass is not allowed.
-	If you try to do this, the metaclass will throw a TypeError.
-
-(4) You must use the @inherited_dispatch decorator on all functions
+(3) You must use the @inherited_dispatch decorator on all functions
 	you want to be able to access "inherited multiple dispatch" features.
 
-(5) Methods decorated with @inherited_dispatch must have all arguments type-annotated.
+(4) Methods decorated with @inherited_dispatch must have all arguments type-annotated.
 	(This includes type-annotating 'self', 'class', etc. --
 	it will be cleaner if you do from __future__ import annotations.)
 
-(6) There must be exactly one registered implementation of a multiple-dispatch function
+(5) There must be exactly one registered implementation of a multiple-dispatch function
 	that has the argument base_impl=True passed to the @inherited_dispatch decorator.
 	This informs the module that this implementation should be seen as the "fallback" implementation.
 
-(7) The types of the arguments passed to a function must exactly match the types given in an implementation annotation
+(6) The types of the arguments passed to a function must exactly match the types given in an implementation annotation
 	in order for that implementation to be returned. Anything else, and the fallback implementation is returned.
 
 	There are two exceptions to this: if you annotate an argument with TypeVar and "bind" the TypeVar to a class,
@@ -33,13 +30,13 @@
 
 	The other exception is typing.Any, which will match with any argument type.
 
-(8) Be aware that if you use flexible/ambiguous types such as typing.TypeVar, typing.Any or typing.Union,
+(7) Be aware that if you use flexible/ambiguous types such as typing.TypeVar, typing.Any or typing.Union,
 	this module makes no guarantee that it will find the "best" implementation
 	that "most closely" matches the types of the arguments provided.
 	It will return the first implementation it finds that matches all of the argument types --
 	it's on you if you're not specific enough!
 
-(9) Allowed "special types" for annotations are:
+(8) Allowed "special types" for annotations are:
 	- typing.Annotated                                          (Resolves to a normal type when typing.get_type_hints() is called on it)
 	- typing.Any                                                (CAN'T be used with isinstance())
 	- typing.Union                                              (CAN'T be used with isinstance())
@@ -51,10 +48,10 @@
 	- Paramaterised collections.abc (MutableSequence[str] etc)  (CAN be used with isinstance(), but only if NOT parameterised)
 	- typing.Callable                                           (CAN be used with isinstance(), but only if NOT parameterised)
 
-(10) Using the | operator between types in annotations is disallowed (use typing.Union instead).
+(9) Using the | operator between types in annotations is disallowed (use typing.Union instead).
 	Other features introduced in python 3.10 may not work either; this has only been tested on python 3.9.
 
-(11) Disallowed types for annotations are the following.
+(10) Disallowed types for annotations are the following.
 	(Implementation for some of these would be possible but would probably slow it down/complicate it more.)
 
 	- typing.Literal
@@ -63,20 +60,20 @@
 	- typing.ClassVar
 	- unparamaterised typing.Final
 
-(12) classmethods and staticmethods are possible,
+(11) classmethods and staticmethods are possible,
 	but you cannot use the standard builtin @classmethod and @staticmethod decorators.
 	Instead, mark the methods as classmethods or staticmethods by passing class_method=True or static_method=True
 	into the @inherited_dispatch decorator.
 
-(13) All implementations of any one method must be the same 'kind' of method
+(12) All implementations of any one method must be the same 'kind' of method
 	-- they must all either be instance methods, all static methods, or all class methods.
 
-(14) You can't use the @inherited_dispatch decorator on dunder methods (that would be crazy!)
+(13) You can't use the @inherited_dispatch decorator on dunder methods (that would be crazy!)
 
-(15) Only a base implementation of a function is allowed to have a variable number of arguments.
+(14) Only a base implementation of a function is allowed to have a variable number of arguments.
 	All other implementations of a function must have a fixed number of positional and keyword arguments.
 
-(16) The base implementation may have a variable number of positional arguments,
+(15) The base implementation may have a variable number of positional arguments,
 	or a variable number of keyword arguments. However, it may not have both.
 
 """
