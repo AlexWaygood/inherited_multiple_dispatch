@@ -13,7 +13,7 @@
 	you want to be able to access "inherited multiple dispatch" features.
 
 (4) Methods decorated with @inherited_dispatch must have all arguments type-annotated.
-	(This includes type-annotating 'self', 'class', etc. --
+	(This includes type-annotating 'self', 'cls', etc. --
 	it will be cleaner if you do from __future__ import annotations.)
 
 (5) There must be exactly one registered implementation of a multiple-dispatch function
@@ -23,7 +23,7 @@
 (6) The types of the arguments passed to a function must exactly match the types given in an implementation annotation
 	in order for that implementation to be returned. Anything else, and the fallback implementation is returned.
 
-	There are two exceptions to this: if you annotate an argument with TypeVar and "bind" the TypeVar to a class,
+	There are two exceptions to this: if you annotate an argument with typing.TypeVar and "bind" the TypeVar to a class,
 	any subclasses of the bound class will "match" the annotation.
 	TypeVars may be bound to typing.Union as well as to a single class.
 	However, they may not be bound to forward references.
