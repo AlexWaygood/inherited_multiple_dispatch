@@ -100,13 +100,10 @@ if t.TYPE_CHECKING:
 	InstanceType = t.Literal['instance']
 	FunctionKindType = t.Union[StaticType, ClassType, InstanceType]
 
-	from typing_extensions import ParamSpec
-	P = ParamSpec('P')
-	R = t.TypeVar('R')
 	CallableTypeVar = t.TypeVar('CallableTypeVar', bound=t.Callable)
 	FunctionKindTypeVar = t.TypeVar('FunctionKindTypeVar', bound=t.Optional[FunctionKindType])
 
-	class InheritedDispatchFuncType(t.Generic[CallableTypeVar, FunctionKindTypeVar]):
+	class InheritedDispatchFuncType(t.Protocol[CallableTypeVar, FunctionKindTypeVar]):
 		__call__: CallableTypeVar
 		__annotations__: dict[str, t.Any]
 		__name__: str
@@ -121,7 +118,7 @@ if t.TYPE_CHECKING:
 	AnyList = list[t.Any]
 	CallableAnyType = t.Callable[..., t.Any]
 
-	class ImplementationIterator(t.Generic[FunctionKindTypeVar]):
+	class ImplementationIterator(t.Protocol[FunctionKindTypeVar]):
 		def __iter__(self, /) -> t.Iterable[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]: ...
 
 
@@ -200,14 +197,8 @@ if t.TYPE_CHECKING:
 		) -> None:
 			...
 
-
-	InheritedDispatchTypeVar = t.TypeVar('InheritedDispatchTypeVar', bound=InheritedDispatchFuncType)
-
-	class PartialedDispatchFuncType(t.Protocol[t.Callable[[P], R]]):
-		def __call__(
-				self,
-				func: t.Callable[[P], R]
-		) -> InheritedDispatchFuncType[t.Callable[[P], R], FunctionKindTypeVar]:
+	class PartialedDispatchFuncType(t.Protocol[CallableTypeVar]):
+		def __call__(self, func: CallableTypeVar) -> InheritedDispatchFuncType[CallableTypeVar, FunctionKindTypeVar]:
 			...
 
 	AnnotationType = t.Union[
@@ -220,11 +211,6 @@ if t.TYPE_CHECKING:
 		GenericAlias,
 		ABCMeta
 	]
-
-	InstanceOrMethodListTypeVar = t.TypeVar(
-		'InstanceOrMethodListTypeVar',
-		bound=t.Union[CallableListType[StaticType], CallableListType[ClassType]]
-	)
 
 	ClassDictType = dict[str, t.Any]
 	InheritedDispatchBases = tuple[type, ...]
@@ -414,25 +400,25 @@ def inherited_dispatch(
 
 @t.overload
 def inherited_dispatch(
-		func: t.Callable[[P], R],
+		func: CallableTypeVar,
 		base_impl: bool = False,
 		static_method: bool = False,
 		class_method: bool = False,
 		suppress_warnings: bool = False
-) -> InheritedDispatchFuncType[t.Callable[[P], R], FunctionKindTypeVar]:
+) -> InheritedDispatchFuncType[CallableTypeVar, FunctionKindTypeVar]:
 	"""Signature if the decorator has been used with arguments"""
 	...
 
 
 def inherited_dispatch(
-		func: t.Optional[t.Callable[[P], R]] = None,
+		func: t.Optional[CallableTypeVar] = None,
 		*,
 		base_impl: bool = False,
 		static_method: bool = False,
 		class_method: bool = False,
 		suppress_warnings: bool = False
 ) -> t.Union[
-	InheritedDispatchFuncType[t.Callable[[P], R], FunctionKindTypeVar],
+	InheritedDispatchFuncType[CallableTypeVar, FunctionKindTypeVar],
 	PartialedDispatchFuncType[CallableAnyType]
 ]:
 
