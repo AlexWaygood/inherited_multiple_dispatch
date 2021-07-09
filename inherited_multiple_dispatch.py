@@ -84,7 +84,6 @@
 from __future__ import annotations
 
 from functools import partial, cache, update_wrapper
-from collections import UserList, UserDict
 from abc import ABCMeta
 from types import GenericAlias
 from inspect import signature, Parameter, getsource
@@ -105,30 +104,70 @@ if t.TYPE_CHECKING:
 	P = ParamSpec('P')
 	R = t.TypeVar('R')
 	CallableTypeVar = t.TypeVar('CallableTypeVar', bound=t.Callable)
+	FunctionKindTypeVar = t.TypeVar('FunctionKindTypeVar', bound=t.Optional[FunctionKindType])
 
-	class InheritedDispatchFuncType(t.Protocol[CallableTypeVar]):
+	class InheritedDispatchFuncType(t.Generic[CallableTypeVar, FunctionKindTypeVar]):
 		__call__: CallableTypeVar
 		__annotations__: dict[str, t.Any]
 		__name__: str
 		inherited_dispatch: bool
 		base_impl: bool
 		suppress_warnings: bool
-		kind: FunctionKindType
+		kind: FunctionKindTypeVar
 		checked: bool
 		variable_args_no: bool
 
-	FunctionKindTypeVar = t.TypeVar('FunctionKindTypeVar', bound=t.Optional[FunctionKindType])
+
+	AnyList = list[t.Any]
+	CallableAnyType = t.Callable[..., t.Any]
+
+	class ImplementationIterator(t.Generic[FunctionKindTypeVar]):
+		def __iter__(self, /) -> t.Iterable[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]: ...
+
 
 	class CallableListType(t.Protocol[FunctionKindTypeVar]):
 		__name__: str
 		__call__: CallableAnyType
-		base_impl: t.Optional[AnyInheritedDispatchFunc]
+		base_impl: t.Optional[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]
 		base_impl_args_len: int
 		variable_args_no: bool
 		kind: FunctionKindTypeVar
 		checked: bool
-
-		def extend_flag_unchecked(self, iterable: t.Iterable[AnyInheritedDispatchFunc]) -> None: ...
+		def find_impl(self, /, *argtypes: type) -> InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]: ...
+		def _check_function_impls(self, /) -> None: ...
+		def __hash__(self, /) -> int: ...
+		def __str__(self, /) -> str: ...
+		def __repr__(self, /) -> str: ...
+		def __add__(self, other: AnyList, /) -> CallableListType[FunctionKindTypeVar]: ...
+		def __contains__(self, item: t.Any, /) -> bool: ...
+		def __delitem__(self, key: int, /) -> None: ...
+		def __eq__(self, other: t.Any, /) -> bool: ...
+		def __ge__(self, other: AnyList, /) -> bool: ...
+		def __getattribute__(self, item: str, /) -> t.Any: ...
+		def __getitem__(self, item: int) -> InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]: ...
+		def __gt__(self, other: AnyList, /) -> bool: ...
+		def __iadd__(self, other: AnyList, /) -> None: ...
+		def __imul__(self, other: int, /) -> t.NoReturn: ...
+		def __iter__(self, /) -> ImplementationIterator: ...
+		def __le__(self, other: AnyList, /) -> bool: ...
+		def __len__(self, /) -> int: ...
+		def __lt__(self, other: AnyList, /) -> bool: ...
+		def __mul__(self, other: int, /) -> t.NoReturn: ...
+		def __ne__(self, other: t.Any, /) -> bool: ...
+		def __reversed__(self, /) -> ImplementationIterator: ...
+		def __rmul__(self, other: int, /) -> t.NoReturn: ...
+		def __sizeof__(self, /) -> int: ...
+		def append(self, value: InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar], /) -> None: ...
+		def clear(self, /) -> None: ...
+		def copy(self, /) -> CallableListType[FunctionKindTypeVar]: ...
+		def count(self, value: InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar], /) -> int: ...
+		def extend(self, iterable: ImplementationIterator[FunctionKindTypeVar], /) -> None: ...
+		def index(self, value, start=0, stop=9223372036854775807, /) -> int: ...
+		def pop(self, index: int = -1, /) -> InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]: ...
+		def remove(self, value: InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar], /) -> None: ...
+		def reverse(self, /) -> None: ...
+		def sort(self, *args, **kwargs) -> t.NoReturn: ...
+		def extend_flag_unchecked(self, iterable: ImplementationIterator) -> None: ...
 		def arg_compares_equal(self, annotated_type: AnnotationType, arg_type: type) -> bool: ...
 
 		def all_args_compare_equal(
@@ -137,18 +176,38 @@ if t.TYPE_CHECKING:
 				arg_types: t.Sequence[type]
 		) -> bool: ...
 
-		def find_impl(self, *argtypes: type) -> InheritedDispatchFuncType: ...
-		def _check_function_impls(self) -> None: ...
-		def __hash__(self) -> int: ...
-		def __str__(self) -> str: ...
-		def __repr__(self) -> str: ...
+		def __init__(
+				self,
+				data: t.Optional[list[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]],
+				name: str,
+				/
+		) -> None:
+			...
+
+		def __setitem__(
+				self,
+				key: int,
+				value: InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar],
+				/
+		) -> None:
+			...
+
+		def insert(
+				self,
+				index: int,
+				value: InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar],
+		        /
+		) -> None:
+			...
+
 
 	InheritedDispatchTypeVar = t.TypeVar('InheritedDispatchTypeVar', bound=InheritedDispatchFuncType)
-	CallableAnyType = t.Callable[..., t.Any]
-	AnyInheritedDispatchFunc = InheritedDispatchFuncType[CallableAnyType]
 
 	class PartialedDispatchFuncType(t.Protocol[t.Callable[[P], R]]):
-		def __call__(self, func: t.Callable[[P], R]) -> InheritedDispatchFuncType[t.Callable[[P], R]]:
+		def __call__(
+				self,
+				func: t.Callable[[P], R]
+		) -> InheritedDispatchFuncType[t.Callable[[P], R], FunctionKindTypeVar]:
 			...
 
 	AnnotationType = t.Union[
@@ -189,7 +248,7 @@ class InheritedDispatchWarning(UserWarning):
 	pass
 
 
-def raise_for_invalid_hint(hint: t.Any) -> None:
+def raise_for_invalid_hint(hint: t.Any, /) -> None:
 	"""
 	Raises an exception if a user has attempted to use an invalid type hint
 	on a function decorated with the @inherited_dispatch decorator.
@@ -216,7 +275,7 @@ def raise_for_invalid_hint(hint: t.Any) -> None:
 		raise TypeError(f"inherited_dispatch decorator won't work with {origin}")
 
 
-def paramaterised_hint_detected(hint: AnnotationType) -> bool:
+def paramaterised_hint_detected(hint: AnnotationType, /) -> bool:
 	"""
 	Function to detect if the user is using a parameterised type hint when annotating a function.
 	A parameterised type hint will not cause the programme to crash, but may not result in the outcome the user expects.
@@ -250,6 +309,7 @@ class FunctionInfo(t.NamedTuple):
 
 def check_function_compatibility(
 		func: CallableAnyType,
+		/,
 		static_method: bool,
 		class_method: bool,
 		base_impl: bool
@@ -359,7 +419,7 @@ def inherited_dispatch(
 		static_method: bool = False,
 		class_method: bool = False,
 		suppress_warnings: bool = False
-) -> InheritedDispatchFuncType[t.Callable[[P], R]]:
+) -> InheritedDispatchFuncType[t.Callable[[P], R], FunctionKindTypeVar]:
 	"""Signature if the decorator has been used with arguments"""
 	...
 
@@ -371,7 +431,10 @@ def inherited_dispatch(
 		static_method: bool = False,
 		class_method: bool = False,
 		suppress_warnings: bool = False
-) -> t.Union[InheritedDispatchFuncType[t.Callable[[P], R]], PartialedDispatchFuncType[CallableAnyType]]:
+) -> t.Union[
+	InheritedDispatchFuncType[t.Callable[[P], R], FunctionKindTypeVar],
+	PartialedDispatchFuncType[CallableAnyType]
+]:
 
 	"""
 	Decorator to mark out the functions that you want to operate by the rules of inheritable singledispatch.
@@ -412,7 +475,7 @@ def inherited_dispatch(
 
 
 @cache
-def arg_compares_equal(annotated_type: AnnotationType, arg_type: type) -> bool:
+def arg_compares_equal(annotated_type: AnnotationType, arg_type: type, /) -> bool:
 	"""
 	Determine whether an argument that has been supplied "matches" a type-annotation in a given implementation.
 	Sometimes easier said than done.
@@ -455,7 +518,7 @@ def arg_compares_equal(annotated_type: AnnotationType, arg_type: type) -> bool:
 
 
 @cache
-def typevar_compares_equal(typevar_binding: AnnotationType, arg_type: type) -> bool:
+def typevar_compares_equal(typevar_binding: AnnotationType, arg_type: type, /) -> bool:
 	# If the TypeVar is bound to a single type, typing.Protocol or ABCMeta
 	if isinstance(typevar_binding, (type, t.Protocol, ABCMeta)):
 		return issubclass(arg_type, typevar_binding)
@@ -476,7 +539,7 @@ def typevar_compares_equal(typevar_binding: AnnotationType, arg_type: type) -> b
 
 
 @cache
-def all_args_compare_equal(annotated_types: t.Sequence[AnnotationType], arg_types: t.Sequence[type]) -> bool:
+def all_args_compare_equal(annotated_types: t.Sequence[AnnotationType], arg_types: t.Sequence[type], /) -> bool:
 	"""
 	Comparisons for base implementation are done differently --
 	for any other implementations, we need an exact match in numbers of arguments
@@ -496,7 +559,7 @@ def all_args_compare_equal(annotated_types: t.Sequence[AnnotationType], arg_type
 		) from err
 
 
-class CallableFunctionList(UserList):
+class CallableFunctionList(list):
 	"""
 	Container object for a list of function implementations.
 
@@ -507,28 +570,28 @@ class CallableFunctionList(UserList):
 
 	def __init__(
 			self,
-			data: t.Optional[list[AnyInheritedDispatchFunc]] = None,
+			data: t.Optional[list[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]] = None,
 			name: str = ''
 	) -> None:
 
 		super().__init__(data if data is not None else [])
 		self.__name__ = name
-		self.base_impl: t.Optional[AnyInheritedDispatchFunc] = None
+		self.base_impl: t.Optional[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]] = None
 		self.base_impl_args_len = 0
 		self.variable_args_no = False
 		self.kind: t.Optional[FunctionKindType] = None
 		self.checked = False
 
-	def extend_flag_unchecked(self, iterable: t.Iterable[AnyInheritedDispatchFunc]) -> None:
+	def extend_flag_unchecked(self, iterable: ImplementationIterator[FunctionKindTypeVar], /) -> None:
 		self.extend(iterable)
 		self.checked = False
 
 	@cache
-	def find_impl(self, *argtypes: type) -> InheritedDispatchFuncType:
+	def find_impl(self, /, *argtypes: type) -> InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]:
 		"""Determine which implementation is most suitable for this set of arguments."""
 
 		try:
-			return next(func for func in self.data if all_args_compare_equal(func.type_hints, argtypes))
+			return next(func for func in self if all_args_compare_equal(func.type_hints, argtypes))
 		except StopIteration:
 			args_no, exception_needed = len(argtypes), False
 			if (
@@ -543,16 +606,16 @@ class CallableFunctionList(UserList):
 				) from None
 			return self.base_impl
 
-	def _check_function_impls(self) -> None:
+	def _check_function_impls(self, /) -> None:
 		"""This function should only be accessed by InheritedDispatchMeta"""
-		g = groupby(func.kind for func in self.data)
+		g = groupby(func.kind for func in self)
 		if not (next(g, True) and not next(g, False)):
 			raise TypeError(
 				"Multiple implementations of one function, all with the same name, must be of the same kind. "
 				"E.g. they must all be class methods, instance methods or static methods"
 			)
 
-		base_impls = [func for func in self.data if func.base_impl]
+		base_impls = [func for func in self if func.base_impl]
 
 		if len(base_impls) != 1:
 			raise TypeError(
@@ -570,7 +633,7 @@ class CallableFunctionList(UserList):
 			self.variable_args_no = base_impl.variable_args_no
 			self.kind = base_impl.kind
 
-		for func in filter(lambda func: not func.checked, self.data):
+		for func in filter(lambda func: not func.checked, self):
 			# Convert the annotations into types, add it to the function,
 			# emit a UserWarning if Generic types or GenericAliases are being used.
 			try:
@@ -626,14 +689,23 @@ class CallableFunctionList(UserList):
 			impl = self.find_impl(*(type(arg) for arg in chain(args, kwargs.values())))
 		return impl(*args, **kwargs)
 
-	def __hash__(self) -> int:
-		return id(self)
+	def __hash__(self, /) -> int: return id(self)
 
-	def __str__(self) -> str:
-		return f'Implementation list for function "{self.__name__}"'
+	def __str__(self, /) -> str: return f'Implementation list for function "{self.__name__}"'
 
-	def __repr__(self) -> str:
-		return f'Implementation list for function "{self.__name__}": {self.data}'
+	def __repr__(self, /) -> str: return f'Implementation list for function "{self.__name__}": {super().__repr__()}'
+
+	def __mul__(self, other: int, /) -> t.NoReturn:
+		raise NotImplementedError("Can't multiply a list of function implementations")
+
+	def __imul__(self, other: int, /) -> t.NoReturn:
+		raise NotImplementedError("Can't multiply a list of function implementations")
+
+	def __rmul__(self, other: int, /) -> t.NoReturn:
+		raise NotImplementedError("Can't multiply a list of function implementations")
+
+	def sort(self, *args, **kwargs) -> t.NoReturn:
+		raise NotImplementedError("Cannot sort a list of function implementations")
 
 
 class NiceReprPartial:
@@ -655,11 +727,11 @@ class NiceReprPartial:
 		self.calling_object = calling_object
 		self.partialised_callable = partial(original_callable, calling_object)
 
-	def __iter__(self) -> t.Iterable[InheritedDispatchFuncType[CallableAnyType]]:
+	def __iter__(self, /) -> t.Iterable[InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]]:
 		"""Iterates through the functions in the CallableFunctionList contained within"""
 		return self.original_callable.__iter__()
 
-	def __getitem__(self, index: int) -> InheritedDispatchFuncType[CallableAnyType]:
+	def __getitem__(self, index: int, /) -> InheritedDispatchFuncType[CallableAnyType, FunctionKindTypeVar]:
 		"""
 		Makes individual implementations in the CallableFunctionList
 		directly accessible through indexing the NiceReprPartial
@@ -667,19 +739,19 @@ class NiceReprPartial:
 
 		return self.original_callable.__getitem__(index)
 
-	def __repr__(self) -> str:
+	def __repr__(self, /) -> str:
 		return f'{repr(self.original_callable)}. Bound as a method to {self.calling_object}.'
 
 	def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
 		return self.partialised_callable(*args, **kwargs)
 
-	def print_argtypes(self) -> None:
+	def print_argtypes(self, /) -> None:
 		"""Mainly here for debugging purposes: will print out all of the implementations of the function within."""
 		for tup in [tuple(t.get_type_hints(func).values()) for func in self.original_callable]:
 			print(tup)
 
 
-class _DictAllowingDuplicates(UserDict):
+class _DictAllowingDuplicates(dict):
 	"""
 	A dict that will stash multiple copies of a function with the same name
 	if they're marked with the @inherited_dispatch decorator
@@ -690,7 +762,7 @@ class _DictAllowingDuplicates(UserDict):
 		data[GENERIC_FUNCDICT_PRIVATE] = {}
 		super().__init__(data)
 
-	def __setitem__(self, key: str, value: t.Any) -> None:
+	def __setitem__(self, key: str, value: t.Any, /) -> None:
 		"""
 		Treat the vast majority of objects normally,
 		but implement special treatment for functions marked with the inherited_dispatch decorator.
@@ -699,12 +771,9 @@ class _DictAllowingDuplicates(UserDict):
 		if not hasattr(value, 'inherited_dispatch'):
 			return super().__setitem__(key, value)
 
-		if key not in (funcdict := self.data[GENERIC_FUNCDICT_PRIVATE]):
+		if key not in (funcdict := self[GENERIC_FUNCDICT_PRIVATE]):
 			funcdict[key] = CallableFunctionList(name=key)
 		funcdict[key].append(value)
-
-	def to_dict(self) -> ClassDictType:
-		return self.data
 
 
 class InheritedDispatchMeta(type):
@@ -729,7 +798,7 @@ class InheritedDispatchMeta(type):
 			cls_dict: _DictAllowingDuplicates
 	) -> InheritedDispatchMeta:
 
-		new_dict = cls_dict.to_dict()
+		new_dict = dict(cls_dict)
 
 		# Add some read-only properties for convenient access to the annotated_funcdicts.
 		for public_name, private_name in (
