@@ -11,7 +11,7 @@ This repo is an implementation of multiple-dispatch in python using metaclasses.
 
 ## Should I use this module?
 Probably not! Only the most basic tests have been done on it.
-If you're looking for multiple-dispatch solutions, you should probably look at [`plum-dispatch`](https://github.com/wesselb/plum) or [`multipledispatch`](https://pypi.org/project/multipledispatch/#description), both of which are much more mature projects than this one.
+If you're looking for multiple-dispatch solutions, you should probably look at [`plum-dispatch`](https://github.com/wesselb/plum) or [`multipledispatch`](https://github.com/mrocklin/multipledispatch), both of which are much more mature projects than this one.
 
 This repo is more for demonstration purposes than anything else. However, it does have some features that neither of the above projects have.
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from inherited_multiple_dispatch import InheritedDispatchBase, inherited_dispatch
 from typing import Literal, TypeVar
+#from traceback_with_variables import printing_exc
 
 
 class A(InheritedDispatchBase):
@@ -88,7 +89,7 @@ x_instance, y_instance = X(), Y()
 try:
 	Z()
 except Exception as e:
-	print(f'ERROR: {e}')
+	print(f'{type(e).__name__}: {e}')
 	print(
 		'^This error is expected, and is supposed to happen -- '
 		'Z cannot be instantiated as one of its type-hints (typing.Literal) is invalid with this module'
@@ -116,7 +117,7 @@ print()
 try:
 	print(one_instance.handle('hi'))
 except AttributeError as e:
-	print(f'ERROR: {e}')
+	print(f'{type(e).__name__}: {e}')
 	print(
 		'^This error is expected, and is supposed to happen -- '
 		'although One inherits from InheritedDispatchBase, it is not part of the inheritance chain '
@@ -147,7 +148,7 @@ print()
 try:
 	print(c_instance.a_static_method('hi', 3))
 except TypeError as e:
-	print(f'ERROR: {e}')
+	print(f'{type(e).__name__}: {e}')
 	print(
 		"^This error is expected, and is supposed to happen -- C inherits directly from A, "
 		"so only has access to A's implementation of the method, not B's."
